@@ -12,6 +12,7 @@ app.use(express.json());
 
 // Event schema
 const eventSchema = new mongoose.Schema({
+  id: { type: Number, unique: true, required: true },
   name: String,
   date: String,
   venue: String,
@@ -41,8 +42,13 @@ app.get("/api/events", async (req, res) => {
 
 // GET specific event
 app.get("/api/events/:id", async (req, res) => {
-  const event = await Event.findById(req.params.id);
-  if (!event) return res.status(404).json({ message: "Event not found" });
+  const eventId = Number(req.params.id);
+
+  const event = await Event.findOne({ id: eventId });
+  if (!event) {
+    return res.status(404).json({ message: "Event not found" });
+  }
+
   res.json(event);
 });
 
@@ -54,10 +60,23 @@ app.post("/api/events", async (req, res) => {
 });
 
 // PUT update event
-app.put("/api/events/:id", async (req, res) => {
-  const updatedEvent = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  if (!updatedEvent) return res.status(404).json({ message: "Event not found" });
-  res.json(updatedEvent);
+app.post("/api/events/:id", async (req, res) => {
+  const eventId = Number(req.params.id);
+
+  const existingEvent = await Event.findOne({ id: eventId });
+  if (existingEvent) {
+    return res.status(400).json({ message: "Event ID already exists" });
+  }
+
+  const newEvent = new Event({
+    id: eventId,
+    name: req.body.name,
+    date: req.body.date,
+    venue: req.body.venue,
+  });
+
+  await newEvent.save();
+  res.status(201).json(newEvent);
 });
 
 // DELETE event
