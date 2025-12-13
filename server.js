@@ -25,7 +25,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ["./server.js"], // <-- points to this file
+  apis: ["./server.js"], // points to this file
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
@@ -66,8 +66,7 @@ const Event = mongoose.model("Event", eventSchema);
 const Attendee = mongoose.model("Attendee", attendeeSchema);
 const Organizer = mongoose.model("Organizer", organizerSchema);
 
-// ==================== ROUTES ====================
-
+// ==================== EVENTS ====================
 /**
  * @swagger
  * /api/events:
@@ -134,17 +133,67 @@ app.delete("/api/events/:id", async (req, res) => {
 });
 
 // ==================== ATTENDEES ====================
+/**
+ * @swagger
+ * /api/attendees:
+ *   get:
+ *     summary: Get all attendees
+ *     tags: [Attendees]
+ *     responses:
+ *       200:
+ *         description: List of all attendees
+ */
 app.get("/api/attendees", async (req, res) => {
   const attendees = await Attendee.find().sort({ id: 1 }).select("id name eventId -_id");
   res.json(attendees);
 });
 
+/**
+ * @swagger
+ * /api/attendees/{id}:
+ *   get:
+ *     summary: Get attendee by ID
+ *     tags: [Attendees]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Attendee ID
+ *     responses:
+ *       200:
+ *         description: Attendee found
+ *       404:
+ *         description: Attendee not found
+ */
 app.get("/api/attendees/:id", async (req, res) => {
   const attendee = await Attendee.findOne({ id: Number(req.params.id) }).select("id name eventId -_id");
   if (!attendee) return res.status(404).json({ message: "Attendee not found" });
   res.json(attendee);
 });
 
+/**
+ * @swagger
+ * /api/attendees:
+ *   post:
+ *     summary: Create a new attendee
+ *     tags: [Attendees]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               eventId:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Attendee created
+ */
 app.post("/api/attendees", async (req, res) => {
   const lastAttendee = await Attendee.findOne().sort({ id: -1 });
   const newId = lastAttendee ? lastAttendee.id + 1 : 1;
@@ -153,6 +202,36 @@ app.post("/api/attendees", async (req, res) => {
   res.status(201).json({ id: newAttendee.id, name: newAttendee.name, eventId: newAttendee.eventId });
 });
 
+/**
+ * @swagger
+ * /api/attendees/{id}:
+ *   patch:
+ *     summary: Update an attendee
+ *     tags: [Attendees]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Attendee ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               eventId:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Attendee updated
+ *       404:
+ *         description: Attendee not found
+ */
 app.patch("/api/attendees/:id", async (req, res) => {
   const updatedAttendee = await Attendee.findOneAndUpdate(
     { id: Number(req.params.id) },
@@ -164,6 +243,25 @@ app.patch("/api/attendees/:id", async (req, res) => {
   res.json(updatedAttendee);
 });
 
+/**
+ * @swagger
+ * /api/attendees/{id}:
+ *   delete:
+ *     summary: Delete an attendee
+ *     tags: [Attendees]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Attendee ID
+ *     responses:
+ *       200:
+ *         description: Attendee removed
+ *       404:
+ *         description: Attendee not found
+ */
 app.delete("/api/attendees/:id", async (req, res) => {
   const deletedAttendee = await Attendee.findOneAndDelete({ id: Number(req.params.id) });
   if (!deletedAttendee) return res.status(404).json({ message: "Attendee not found" });
@@ -171,17 +269,67 @@ app.delete("/api/attendees/:id", async (req, res) => {
 });
 
 // ==================== ORGANIZERS ====================
+/**
+ * @swagger
+ * /api/organizers:
+ *   get:
+ *     summary: Get all organizers
+ *     tags: [Organizers]
+ *     responses:
+ *       200:
+ *         description: List of all organizers
+ */
 app.get("/api/organizers", async (req, res) => {
   const organizers = await Organizer.find().sort({ id: 1 }).select("id name contact -_id");
   res.json(organizers);
 });
 
+/**
+ * @swagger
+ * /api/organizers/{id}:
+ *   get:
+ *     summary: Get organizer by ID
+ *     tags: [Organizers]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Organizer ID
+ *     responses:
+ *       200:
+ *         description: Organizer found
+ *       404:
+ *         description: Organizer not found
+ */
 app.get("/api/organizers/:id", async (req, res) => {
   const organizer = await Organizer.findOne({ id: Number(req.params.id) }).select("id name contact -_id");
   if (!organizer) return res.status(404).json({ message: "Organizer not found" });
   res.json(organizer);
 });
 
+/**
+ * @swagger
+ * /api/organizers:
+ *   post:
+ *     summary: Create a new organizer
+ *     tags: [Organizers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               contact:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Organizer created
+ */
 app.post("/api/organizers", async (req, res) => {
   const lastOrg = await Organizer.findOne().sort({ id: -1 });
   const newId = lastOrg ? lastOrg.id + 1 : 1;
@@ -190,6 +338,36 @@ app.post("/api/organizers", async (req, res) => {
   res.status(201).json({ id: newOrg.id, name: newOrg.name, contact: newOrg.contact });
 });
 
+/**
+ * @swagger
+ * /api/organizers/{id}:
+ *   patch:
+ *     summary: Update an organizer
+ *     tags: [Organizers]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Organizer ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               contact:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Organizer updated
+ *       404:
+ *         description: Organizer not found
+ */
 app.patch("/api/organizers/:id", async (req, res) => {
   const updatedOrg = await Organizer.findOneAndUpdate(
     { id: Number(req.params.id) },
@@ -201,6 +379,25 @@ app.patch("/api/organizers/:id", async (req, res) => {
   res.json(updatedOrg);
 });
 
+/**
+ * @swagger
+ * /api/organizers/{id}:
+ *   delete:
+ *     summary: Delete an organizer
+ *     tags: [Organizers]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Organizer ID
+ *     responses:
+ *       200:
+ *         description: Organizer deleted
+ *       404:
+ *         description: Organizer not found
+ */
 app.delete("/api/organizers/:id", async (req, res) => {
   const deletedOrg = await Organizer.findOneAndDelete({ id: Number(req.params.id) });
   if (!deletedOrg) return res.status(404).json({ message: "Organizer not found" });
@@ -212,6 +409,6 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("Connected to MongoDB");
-    app.listen(port, () => console.log(`Server running at http://localhost:${3000}`));
+    app.listen(port, () => console.log(`Server running at http://localhost:${port}`));
   })
   .catch(err => console.error("MongoDB connection error:", err));
